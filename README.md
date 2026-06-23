@@ -1,14 +1,31 @@
-# sws2apps/render-deployment
+# Render Deployment
 
-A GitHub Action to trigger and track deployment in Render
+A GitHub Action to trigger deployment in Render.
 
-Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/sws2apps/render-deployment](https://github.com/sws2apps/render-deployment).
+## Example Usage
 
-## Versions
+```yaml
+name: Trigger Render Deployment
+on:
+  push:
+    branches:
+      - main
+jobs:
+  main:
+    name: Deploy to Render
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@main #consider using pin for dependabot auto update
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v1.6.0 | [`v1.6.0`](https://github.com/chainguard-actions/sws2apps-render-deployment/tree/v1.6.0) | [`71f9c36`](https://github.com/sws2apps/render-deployment/commit/71f9c369fdc647d975eb7f92d3f9bc603e1938d6) |
+      - name: Create deployment
+        uses: sws2apps/render-deployment@main #consider using pin for dependabot auto update
+        with:
+          serviceId: ${{ secrets.RENDER_SERVICE_ID }}
+          apiKey: ${{ secrets.RENDER_API_KEY }}
+          node-version: lts/Jod #optional
+          cli-version: 2.2.0 #optional
+```
 
 ## Privacy
 
