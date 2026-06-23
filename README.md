@@ -9,6 +9,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
 | v1.6.0 | [`v1.6.0`](https://github.com/chainguard-actions/sws2apps-render-deployment/tree/v1.6.0) | [`71f9c36`](https://github.com/sws2apps/render-deployment/commit/71f9c369fdc647d975eb7f92d3f9bc603e1938d6) |
+| v1.8.0 | [`v1.8.0`](https://github.com/chainguard-actions/sws2apps-render-deployment/tree/v1.8.0) | [`d091bd2`](https://github.com/sws2apps/render-deployment/commit/d091bd29255c83fd1110cf4cd099561179480c7b) |
 | v2.1.0 | [`v2.1.0`](https://github.com/chainguard-actions/sws2apps-render-deployment/tree/v2.1.0) | [`36ea61f`](https://github.com/sws2apps/render-deployment/commit/36ea61f37c769f1e8af680432882807b170544be) |
 
 ## Privacy
