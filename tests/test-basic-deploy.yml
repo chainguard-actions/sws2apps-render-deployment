@@ -1,0 +1,78 @@
+name: Test basic deploy (mocked)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up fake render CLI and mock curl
+        run: |
+          # Create a fake install script that installs a fake render binary
+          mkdir -p /tmp/fake-render-bin
+
+          cat > /tmp/fake-install-render.sh << 'EOF'
+          #!/bin/sh
+          # Fake render install script
+          BINDIR="/usr/local/bin"
+          for arg in "$@"; do
+            case "$prev" in
+              -b) BINDIR="$arg" ;;
+            esac
+            prev="$arg"
+          done
+          cat > "$BINDIR/render" << 'RENDEREOF'
+          #!/bin/sh
+          # Fake render CLI
+          echo "render deploys create called with: $@"
+          echo "Deploy triggered successfully (mocked)"
+          exit 0
+          RENDEREOF
+          chmod +x "$BINDIR/render"
+          EOF
+          chmod +x /tmp/fake-install-render.sh
+
+          # Create a fake curl that serves our fake install script
+          mkdir -p /tmp/fake-bin
+          cat > /tmp/fake-bin/curl << 'EOF'
+          #!/bin/sh
+          # Fake curl: intercept render install.sh, fall through for others
+          out=""
+          prev=""
+          for arg in "$@"; do
+            case "$prev" in
+              -o|--output) out="$arg" ;;
+            esac
+            prev="$arg"
+          done
+          case "$*" in
+            *render-oss*install.sh*|*install.sh*render*)
+              if [ -n "$out" ]; then
+                cat /tmp/fake-install-render.sh > "$out"
+              else
+                cat /tmp/fake-install-render.sh
+              fi
+              exit 0
+              ;;
+          esac
+          exec /usr/bin/curl "$@"
+          EOF
+          chmod +x /tmp/fake-bin/curl
+
+          # Prepend fake-bin to PATH so our fake curl is found first
+          echo "/tmp/fake-bin" >> "$GITHUB_PATH"
+
+      - name: Run action with mocked credentials
+        id: deploy
+        uses: .
+        with:
+          serviceId: 'srv-fake-service-id'
+          apiKey: 'rnd_fake_api_key_for_testing'
+          node-version: 'lts/Krypton'
+          cli-version: '2.2.0'
+
+      - name: Assert action completed successfully
+        run: |
+          echo "Action completed without error"
+          echo "PASS: deploy action ran successfully with mocked render CLI"

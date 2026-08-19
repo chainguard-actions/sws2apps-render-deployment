@@ -1,0 +1,33 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main, beta, alpha]
+  pull_request:
+    branches: [main, beta, alpha]
+
+permissions:
+  contents: read
+
+jobs:
+  codeql:
+    name: Code QL
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository for code analysis
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@89a39a4e59826350b863aa6b6252a07ad50cf83e
+        with:
+          languages: javascript
+          queries: security-extended
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e

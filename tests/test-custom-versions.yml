@@ -1,0 +1,91 @@
+name: Test custom node and cli versions (mocked)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up fake render CLI and mock curl
+        run: |
+          # Create a fake install script that records the version and installs a fake render binary
+          cat > /tmp/fake-install-render.sh << 'EOF'
+          #!/bin/sh
+          # Fake render install script - records args and installs fake binary
+          BINDIR="/usr/local/bin"
+          prev=""
+          for arg in "$@"; do
+            case "$prev" in
+              -b) BINDIR="$arg" ;;
+            esac
+            prev="$arg"
+          done
+          cat > "$BINDIR/render" << 'RENDEREOF'
+          #!/bin/sh
+          echo "render deploys create called with: $@"
+          echo "Deploy triggered successfully (mocked)"
+          exit 0
+          RENDEREOF
+          chmod +x "$BINDIR/render"
+          EOF
+          chmod +x /tmp/fake-install-render.sh
+
+          # Create a fake curl that serves our fake install script
+          mkdir -p /tmp/fake-bin
+          cat > /tmp/fake-bin/curl << 'EOF'
+          #!/bin/sh
+          # Fake curl: intercept render install.sh, fall through for others
+          out=""
+          prev=""
+          for arg in "$@"; do
+            case "$prev" in
+              -o|--output) out="$arg" ;;
+            esac
+            prev="$arg"
+          done
+          case "$*" in
+            *render-oss*install.sh*|*install.sh*render*)
+              if [ -n "$out" ]; then
+                cat /tmp/fake-install-render.sh > "$out"
+              else
+                cat /tmp/fake-install-render.sh
+              fi
+              exit 0
+              ;;
+          esac
+          exec /usr/bin/curl "$@"
+          EOF
+          chmod +x /tmp/fake-bin/curl
+
+          echo "/tmp/fake-bin" >> "$GITHUB_PATH"
+
+      - name: Run action with custom node and cli versions
+        id: deploy
+        uses: .
+        with:
+          serviceId: 'srv-custom-service-id'
+          apiKey: 'rnd_fake_api_key_for_testing'
+          node-version: '20.x'
+          cli-version: '2.2.0'
+
+      - name: Assert Node.js version is correct
+        run: |
+          NODE_VER=$(node --version)
+          echo "Node.js version: $NODE_VER"
+          # Should be Node 20.x
+          if echo "$NODE_VER" | grep -qE '^v20\.'; then
+            echo "PASS: Node.js version is 20.x as expected"
+          else
+            echo "FAIL: Expected Node.js 20.x but got $NODE_VER"
+            exit 1
+          fi
+
+      - name: Assert render CLI is available
+        run: |
+          if command -v render > /dev/null 2>&1; then
+            echo "PASS: render CLI is available on PATH"
+          else
+            echo "FAIL: render CLI not found on PATH"
+            exit 1
+          fi

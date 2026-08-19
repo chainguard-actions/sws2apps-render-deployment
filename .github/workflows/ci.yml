@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main, beta]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test_actions:
+    name: Test actions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout for testing preparation
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Test actions for simple action
+        uses: ./
+        with:
+          serviceId: ${{ secrets.RENDER_SERVICE_ID }}
+          apiKey: ${{ secrets.RENDER_API_KEY }}

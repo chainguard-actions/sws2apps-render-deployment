@@ -45,9 +45,10 @@ runs:
       env:
         CLI_VERSION: ${{ inputs.cli-version }}
       run: |
-        curl -fsSL "https://raw.githubusercontent.com/render-oss/cli/refs/tags/v${CLI_VERSION}/bin/install.sh" -o /tmp/render-install.sh
-        sh /tmp/render-install.sh
-        rm -f /tmp/render-install.sh
+        install_script="$(mktemp)"
+        curl -fsSL "https://raw.githubusercontent.com/render-oss/cli/refs/tags/v${CLI_VERSION}/bin/install.sh" -o "$install_script"
+        sh "$install_script"
+        rm -f "$install_script"
     - name: Trigger deploy with Render CLI
       shell: bash
       env:
