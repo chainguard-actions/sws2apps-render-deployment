@@ -1,4 +1,4 @@
-name: Test without optional apiKey input
+name: Test missing required serviceId input
 on:
   workflow_dispatch:
 jobs:
@@ -11,19 +11,18 @@ jobs:
         uses: .
         continue-on-error: true
         with:
-          serviceId: 'srv-fake-service-id-for-testing'
-          # apiKey is intentionally omitted (it is optional)
-          multipleDeployment: 'true'
+          serviceId: ''
+          apiKey: 'rnd_fake_api_key_for_testing_only'
 
-      - name: Assert action failed gracefully without apiKey
+      - name: Assert action failed due to missing serviceId
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
           if [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action correctly failed without apiKey (expected — no auth)"
+            echo "PASS: action correctly failed when serviceId is empty"
           elif [ "$OUTCOME" = "success" ]; then
-            echo "FAIL: action unexpectedly succeeded without apiKey"
+            echo "FAIL: action unexpectedly succeeded with empty serviceId"
             exit 1
           else
             echo "FAIL: unexpected outcome: $OUTCOME"

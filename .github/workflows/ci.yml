@@ -1,0 +1,40 @@
+name: CI
+
+on: 
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test_actions:
+    name: Test actions
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout for testing preparation
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+
+      - name: Use Node.js current version
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+        with:
+          node-version: current
+
+      - name: Install package dependencies
+        run: npm ci
+
+      - name: Build the actions
+        run: npm run build
+
+      - name: Test actions for simple action
+        uses: ./
+        with:
+          serviceId: ${{ secrets.RENDER_SERVICE_ID }}
+          apiKey: ${{ secrets.RENDER_API_KEY }}
+          multipleDeployment: false #optional, default true
