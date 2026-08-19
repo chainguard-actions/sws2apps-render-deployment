@@ -1,4 +1,4 @@
-name: Test without apiKey (optional input omitted)
+name: Test with multipleDeployment set to true (default)
 on:
   workflow_dispatch:
 jobs:
@@ -12,14 +12,16 @@ jobs:
         continue-on-error: true
         with:
           serviceId: srv-fake-service-id-12345
+          apiKey: rnd_fake_api_key_for_testing_only
+          multipleDeployment: true
 
-      - name: Assert action failed gracefully without apiKey
+      - name: Assert action failed (invalid credentials, multipleDeployment=true)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
           if [ "$OUTCOME" != "failure" ]; then
-            echo "FAIL: expected action to fail without a valid apiKey, but got outcome=$OUTCOME"
+            echo "FAIL: expected action to fail with invalid credentials, but got outcome=$OUTCOME"
             exit 1
           fi
-          echo "PASS: action correctly failed when apiKey is omitted (no valid credentials)"
+          echo "PASS: action correctly failed with invalid credentials when multipleDeployment=true"
