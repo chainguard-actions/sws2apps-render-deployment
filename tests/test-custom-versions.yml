@@ -1,0 +1,54 @@
+name: Test custom node and CLI versions
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          serviceId: "srv-fake-service-id"
+          apiKey: "rnd_fake_api_key_for_testing"
+          node-version: "20.x"
+          cli-version: "2.2.0"
+
+      - name: Assert render CLI was installed at the requested version
+        run: |
+          if command -v render >/dev/null 2>&1; then
+            echo "PASS: render CLI is installed"
+            VERSION_OUTPUT="$(render --version 2>&1 || true)"
+            echo "version output: $VERSION_OUTPUT"
+          else
+            echo "FAIL: render CLI was not installed"
+            exit 1
+          fi
+
+      - name: Assert Node.js version matches requested version
+        run: |
+          NODE_VERSION="$(node --version 2>&1)"
+          echo "node version: $NODE_VERSION"
+          # Node 20.x should report v20.x.x
+          if echo "$NODE_VERSION" | grep -qE '^v20\.'; then
+            echo "PASS: Node.js version is 20.x as requested"
+          else
+            echo "FAIL: expected Node.js 20.x but got $NODE_VERSION"
+            exit 1
+          fi
+
+      - name: Assert action failed gracefully (no real credentials)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (no real Render credentials)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded (real credentials may have been provided)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

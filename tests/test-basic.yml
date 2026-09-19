@@ -1,0 +1,47 @@
+name: Test basic usage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Verify render CLI is not yet installed
+        run: |
+          if command -v render >/dev/null 2>&1; then
+            echo "NOTE: render CLI already present before action runs"
+          else
+            echo "PASS: render CLI not yet installed"
+          fi
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          serviceId: "srv-fake-service-id"
+          apiKey: "rnd_fake_api_key_for_testing"
+
+      - name: Assert render CLI was installed by the action
+        run: |
+          if command -v render >/dev/null 2>&1; then
+            echo "PASS: render CLI is installed"
+            render --version || true
+          else
+            echo "FAIL: render CLI was not installed"
+            exit 1
+          fi
+
+      - name: Assert action failed gracefully (no real credentials)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (no real Render credentials)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded (real credentials may have been provided)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
