@@ -12,6 +12,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v1.7.0 | [`v1.7.0`](https://github.com/chainguard-actions/sws2apps-render-deployment/tree/v1.7.0) | [`3a0b75f`](https://github.com/sws2apps/render-deployment/commit/3a0b75f73ecde4a4b6a6cd39d9ac013b0a4bffe0) |
 | v1.8.0 | [`v1.8.0`](https://github.com/chainguard-actions/sws2apps-render-deployment/tree/v1.8.0) | [`d091bd2`](https://github.com/sws2apps/render-deployment/commit/d091bd29255c83fd1110cf4cd099561179480c7b) |
 | v2.1.0 | [`v2.1.0`](https://github.com/chainguard-actions/sws2apps-render-deployment/tree/v2.1.0) | [`36ea61f`](https://github.com/sws2apps/render-deployment/commit/36ea61f37c769f1e8af680432882807b170544be) |
+| v2.1.1 | [`v2.1.1`](https://github.com/chainguard-actions/sws2apps-render-deployment/tree/v2.1.1) | [`ce2545a`](https://github.com/sws2apps/render-deployment/commit/ce2545a0ac68db73e36e3706e441d731367adb79) |
 
 ## Privacy
 
