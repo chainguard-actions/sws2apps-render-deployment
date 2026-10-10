@@ -10,32 +10,33 @@
 
 **Harden Agent Version:** `2`
 
-Action **sws2apps--render-deployment/v2.1.0** was hardened automatically. 4 finding(s) were identified and resolved across 1 iteration(s).
+Action **sws2apps--render-deployment/v2.1.0** was hardened automatically. 5 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
-### script-injection (severity: high)
-
-Two `run:` blocks in action.yaml directly interpolate `${{ inputs.* }}` expressions into shell command strings (sub-rule a), allowing an attacker who controls the calling workflow's inputs to inject arbitrary shell commands.
-
-1. "Install Render CLI" step: `curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/tags/v${{ inputs.cli-version }}/bin/install.sh | sh` — `inputs.cli-version` is interpolated directly into the URL before the shell sees it, enabling path traversal or URL manipulation.
-
-2. "Trigger deploy with Render CLI" step: `render deploys create ${{ inputs.serviceId }} --output text --confirm --wait` — `inputs.serviceId` is interpolated directly as a shell token, enabling command injection via a crafted service ID value.
-
-Fix: move both inputs into `env:` variables and reference them as double-quoted shell variables, e.g. `"$CLI_VERSION"` and `"$SERVICE_ID"`.
-
-Locations:
-
-- `action.yaml:29`
-- `action.yaml:36`
-
 ### unsafe-shell (severity: high)
 
-The "Install Render CLI" step pipes a remotely-fetched script directly to `sh` without any integrity verification: `curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/tags/v${{ inputs.cli-version }}/bin/install.sh | sh`. If the remote URL is compromised or the content is tampered with (e.g. via a MITM or a malicious tag), arbitrary code will execute on the runner. The script should be downloaded to a file first, its checksum verified, and then executed separately.
+The 'Install Render CLI' step pipes a remote script directly to `sh` without first downloading and inspecting it. The pattern `curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/tags/v${{ inputs.cli-version }}/bin/install.sh | sh` executes whatever content is served at that URL immediately in the runner shell. An attacker who can influence the URL (via the `cli-version` input) or who compromises the remote host can execute arbitrary code. The script should be downloaded to a file, verified (e.g. checksum), and then executed separately.
 
 Locations:
 
-- `action.yaml:29`
+- `action.yaml:30`
+
+### script-injection (severity: high)
+
+Sub-rule (a): `${{ inputs.cli-version }}` is interpolated directly inside a `run:` shell command string (embedded in the curl URL). GitHub Actions performs template substitution before the shell ever sees the string, so a malicious value for `cli-version` (e.g. containing shell metacharacters) can break out of the URL context and inject arbitrary shell commands. The value must be passed via an `env:` variable and then double-quoted in the script. Offending line: `curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/tags/v${{ inputs.cli-version }}/bin/install.sh | sh`
+
+Locations:
+
+- `action.yaml:30`
+
+### script-injection (severity: high)
+
+Sub-rule (a): `${{ inputs.serviceId }}` is interpolated directly inside a `run:` shell command string. GitHub Actions performs template substitution before the shell parses the command, so a malicious `serviceId` value containing shell metacharacters (e.g. `;`, `$(...)`, `|`) can inject arbitrary shell commands. The value must be passed via an `env:` variable and then double-quoted in the script. Offending line: `render deploys create ${{ inputs.serviceId }} --output text --confirm --wait`
+
+Locations:
+
+- `action.yaml:37`
 
 ### static-inline-injection (severity: high)
 
@@ -57,11 +58,12 @@ Locations:
 
 ### Iteration 1
 
-**Fixes applied:** script-injection, unsafe-shell, static-inline-injection
+**Fixes applied:** unsafe-shell, script-injection, static-inline-injection
 
 **Notes:**
 
-Fixed action.yaml with two changes:
-1. 'Install Render CLI' step: moved inputs.cli-version into env: as CLI_VERSION, and changed the install pattern from 'curl ... | sh' (unsafe pipe-to-shell) to downloading the script to a temp file first, then executing it separately — fixing both script-injection and unsafe-shell findings.
-2. 'Trigger deploy with Render CLI' step: moved inputs.serviceId into env: as SERVICE_ID and referenced it as double-quoted "$SERVICE_ID" in the run: block — fixing the script-injection finding.
+Fixed action.yaml:
+1. unsafe-shell: Changed 'Install Render CLI' step to download the install script to a temp file using `curl -fsSL ... -o "$INSTALL_SCRIPT"` and then execute it separately with `sh "$INSTALL_SCRIPT"`, instead of piping directly from the internet.
+2. script-injection / static-inline-injection (cli-version): Moved `${{ inputs.cli-version }}` to an `env:` variable `CLI_VERSION` and referenced it as `${CLI_VERSION}` inside the double-quoted curl URL.
+3. script-injection / static-inline-injection (serviceId): Moved `${{ inputs.serviceId }}` to an `env:` variable `SERVICE_ID` and referenced it as `"$SERVICE_ID"` (double-quoted) in the render deploy command.
 
