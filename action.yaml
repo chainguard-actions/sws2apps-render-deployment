@@ -37,7 +37,7 @@ runs:
           -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
           "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
     - name: Setup Node.js
-      uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
+      uses: chainguard-actions/actions-setup-node@60a70c7b6abd0ed3b7738418dc951cd75b45e0d0
       with:
         node-version: ${{ inputs.node-version }}
     - name: Install Render CLI
